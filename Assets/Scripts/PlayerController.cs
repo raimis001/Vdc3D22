@@ -16,6 +16,9 @@ public class PlayerController : MonoBehaviour
     public Vector2 rotateClamp;
     public Vector2 lookClamp;
     public LayerMask groundLayer;
+    public Transform groundCheck;
+    public float checkRadiuss = 0.5f;
+    
 
     public GameObject menuPanel;
 
@@ -23,13 +26,15 @@ public class PlayerController : MonoBehaviour
     float rotateX = 0;
     Rigidbody rigi;
     Vector3 input = Vector3.zero;
-    bool isJumping = false;
     bool isSprint = false;
+
+    Animator anim;   
 
     // Start is called before the first frame update
     void Start()
     {
         rigi = GetComponent<Rigidbody>();
+        anim = GetComponent<Animator>();
 
         menuPanel.SetActive(false);
 
@@ -45,15 +50,17 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        if (isJumping && IsGround())
-        {
-            isJumping = false;
-        }
-
-        if (!isJumping && Input.GetButtonDown("Jump"))
+        if (Input.GetButtonDown("Jump") && IsGround())
         {
             rigi.AddForce(new Vector3(0, jumpForce, 0), ForceMode.Impulse);
-            isJumping = true;
+        }
+        if (Input.GetKey(KeyCode.S) && IsGround())
+        {
+            anim.SetBool("IsSlide",true);
+        } 
+        else
+        {
+            anim.SetBool("IsSlide", false);
         }
 
         input.x = Input.GetAxis("Horizontal");
@@ -69,8 +76,6 @@ public class PlayerController : MonoBehaviour
 
         Camera.main.transform.localEulerAngles = new Vector3(-rotateY, 0, 0);
 
-
-
         transform.localEulerAngles = new Vector3(0, rotateX, 0);
 
     }
@@ -84,29 +89,22 @@ public class PlayerController : MonoBehaviour
     private void LateUpdate()
     {
         Vector3 pos = Camera.main.transform.position;
-        pos.y = 3;
+        pos.y = 3.46f;
         Camera.main.transform.position = pos;
     }
     bool IsGround()
     {
-        Vector3 pos = transform.position;
-        pos.y += 0.5f;
+        Vector3 pos = groundCheck.position;
 
-        Ray ray = new Ray(pos, new Vector3(0, -1, 0));
-
-        return Physics.SphereCast(ray, 0.5f, 0.01f, groundLayer);
-
+        return Physics.OverlapSphere(pos, checkRadiuss, groundLayer).Length > 0;
     }
 
     private void OnDrawGizmos()
     {
-        Vector3 pos = transform.position;
-        pos.y += 0.5f;
-        Gizmos.DrawSphere(pos, 0.5f);
-        pos.y -= 0.05f;
-        Gizmos.DrawSphere(pos, 0.5f);
-
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawSphere(groundCheck.position, checkRadiuss);
     }
+
     private void OnCollisionEnter(Collision collision)
     {
         if (!collision.gameObject.CompareTag("Obstacle"))
