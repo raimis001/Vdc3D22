@@ -13,8 +13,12 @@ public class ChunkController : MonoBehaviour
 
     readonly List<GameObject> chunkList = new List<GameObject>();
 
+    float startSpeed;
+    int level = 0;
+
     private void Start()
     {
+        startSpeed = chunkSpeed;
         CreateChunk(0);
         CreateChunk(1);
     }
@@ -22,8 +26,18 @@ public class ChunkController : MonoBehaviour
     void Update()
     {
         if (!PlayerController.IsLive)
+        {
+            level = 0;
+            chunkSpeed = startSpeed;
             return;
+        }
 
+        int l = Mathf.FloorToInt(PlayerController.Score / 5f);
+        if (l > level)
+        {
+            level = l;
+            chunkSpeed *= 1.1f;
+        }
         chunk.Translate(0, 0, -Time.deltaTime * chunkSpeed);
 
         int c = Mathf.FloorToInt(Mathf.Abs(chunk.position.z / 200f));
